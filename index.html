@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Oficina • Orçamentos</title>
+  <meta name="description" content="Aplicativo mobile-first para orçamentos automotivos. Versão base elegante." />
+  <style>
+    /* Mobile-first elegant stylesheet (light primary blue + gray) */
+    :root{
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --muted: #6b7280;
+      --text: #0f1724;
+      --primary: #0b66b2; /* blue-petro */
+      --accent: #0066cc;
+      --success: #16a34a;
+      --danger: #ef4444;
+      --radius: 14px;
+      --card-border: rgba(11,102,178,0.12);
+      --shadow: 0 8px 20px rgba(15,23,42,0.06);
+      --font-base: 16px;
+    }
+    html[data-theme="dark"]{
+      --bg: #071228;
+      --surface: #071a2a;
+      --muted: #94a3b8;
+      --text: #e6eef8;
+      --primary: #7fb3ff;
+      --card-border: rgba(127,179,255,0.08);
+      --shadow: 0 8px 20px rgba(2,6,23,0.6);
+    }
+
+    html,body{height:100%;margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; -webkit-font-smoothing:antialiased;}
+    :root{font-size:var(--font-base);} /* controlled by JS */
+
+    /* App container */
+    .device { max-width:420px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; }
+    .content { padding:16px 14px 110px; box-sizing:border-box; flex:1; }
+
+    /* Header: only office name centered prominent */
+    header.app-header{ display:flex; align-items:center; justify-content:center; padding:20px 10px; }
+    .brand-title{ background:linear-gradient(90deg,var(--primary),rgba(11,102,178,0.85)); color:white; padding:10px 18px; border-radius:12px; font-weight:700; font-size:1.25rem; box-shadow:var(--shadow);} 
+
+    /* Card */
+    .card{ background:var(--surface); border-radius:var(--radius); padding:12px; box-shadow:var(--shadow); border:1px solid var(--card-border); margin-bottom:12px; }
+    h3{ margin:6px 0 10px 0; font-size:1rem; color:var(--text); }
+    label{ display:block; font-size:0.85rem; color:var(--muted); margin-bottom:6px; }
+
+    input[type=text], input[type=tel], input[type=number], select, textarea{ width:100%; padding:12px; border-radius:10px; border:1px solid rgba(15,23,42,0.06); box-sizing:border-box; background:transparent; color:var(--text); }
+    textarea{ min-height:78px; resize:vertical; }
+
+    /* button styles (option B: cards with contorno and strong buttons) */
+    .btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:11px 14px; border-radius:10px; font-weight:700; font-size:0.95rem; cursor:pointer; }
+    .btn-primary{ background:linear-gradient(90deg,var(--primary),var(--accent)); color:white; border:1px solid rgba(0,0,0,0.04); }
+    .btn-ghost{ background:transparent; border:1px solid rgba(15,23,42,0.06); color:var(--text); }
+    .btn-danger{ background:transparent; border:1px solid var(--danger); color:var(--danger); font-weight:700; }
+
+    .row { display:flex; gap:10px; align-items:center; }
+    .col{ flex:1; }
+    .small{ flex:0 0 100px; }
+
+    /* Items list responsive (stack in mobile) */
+    .items-list{ display:flex; flex-direction:column; gap:10px; }
+    .item{ display:grid; grid-template-columns: 1fr 80px 100px 84px; gap:8px; align-items:center; }
+    .item input{ padding:8px; }
+    .item .subtotal{ text-align:right; font-weight:800; }
+    .item .remove{ display:flex; align-items:center; justify-content:center; }
+
+    .total-row{ display:flex; justify-content:space-between; align-items:center; margin-top:10px; }
+    .total-row .label{ color:var(--muted); }
+    .total-row .value{ font-size:1.25rem; font-weight:900; color:var(--primary); }
+
+    /* Clients list */
+    .clients-list{ display:flex; flex-direction:column; gap:8px; }
+    .client-card{ display:flex; justify-content:space-between; padding:10px; border-radius:10px; border:1px solid var(--card-border); background:var(--surface); }
+
+    /* Bottom nav fixed */
+    nav.bottom-nav{ position:fixed; left:50%; transform:translateX(-50%); bottom:14px; width:calc(100% - 28px); max-width:420px; display:flex; gap:8px; padding:10px; border-radius:14px; background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.85)); box-shadow:0 10px 30px rgba(2,6,23,0.08); border:1px solid rgba(15,23,42,0.04); z-index:999; }
+    html[data-theme="dark"] nav.bottom-nav{ background: linear-gradient(180deg, rgba(6,18,36,0.8), rgba(6,18,36,0.75)); }
+    .nav-btn{ flex:1; display:flex; gap:8px; align-items:center; justify-content:center; padding:8px 10px; border-radius:10px; cursor:pointer; font-weight:700; color:var(--muted); }
+    .nav-btn.active{ background:linear-gradient(90deg,var(--primary),var(--accent)); color:white; }
+
+    /* Login overlay (simple, centered) */
+    .login-overlay{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg, rgba(2,6,23,0.6), rgba(2,6,23,0.6)); z-index:9999; }
+    .login-panel{ width:94%; max-width:420px; border-radius:14px; padding:16px; background:var(--surface); border:1px solid var(--card-border); box-shadow:var(--shadow); }
+
+    .muted{ color:var(--muted); }
+    .help{ font-size:0.86rem; color:var(--muted); margin-top:6px; }
+
+    footer.note{ text-align:center; color:var(--muted); font-size:0.82rem; margin:16px 0 90px; }
+
+    @media (min-width:900px){ .device{ box-shadow:0 20px 50px rgba(2,6,23,0.06); border-radius:20px; margin-top:20px; } }
+
+  </style>
+</head>
+<body>
+  <div class="device" id="app">
+
+    <!-- Login (visual placeholder) -->
+    <div id="loginOverlay" class="login-overlay" role="dialog" aria-modal="true">
+      <div class="login-panel">
+        <h2 style="margin:0 0 6px 0">Entrar na Oficina</h2>
+        <p class="muted">Faça login para acessar seus dados (placeholder). Integração com Firebase Auth será feita depois.</p>
+        <div style="margin-top:12px">
+          <label>E-mail</label>
+          <input id="loginEmail" type="text" placeholder="seu@exemplo.com" />
+        </div>
+        <div style="margin-top:8px">
+          <label>Senha</label>
+          <input id="loginPass" type="password" placeholder="••••••" />
+        </div>
+        <div style="display:flex;gap:10px;margin-top:12px">
+          <button class="btn btn-primary" onclick="fakeLogin()">Entrar</button>
+          <button class="btn btn-ghost" onclick="openRegister()">Criar Conta</button>
+        </div>
+        <p class="help">Dica: clique em Entrar para testar localmente. Após integração Firebase, este será o fluxo real.</p>
+      </div>
+    </div>
+
+    <!-- Header with large office name only -->
+    <header class="app-header">
+      <div class="brand-title" id="headerOfficeName">Oficina Smart Orçamentos</div>
+    </header>
+
+    <!-- Main content scroll area -->
+    <div class="content" id="contentRoot">
+
+      <!-- ORÇAMENTO -->
+      <section id="view-orcamento" class="card" aria-labelledby="orc-title">
+        <h3 id="orc-title">Novo Orçamento</h3>
+
+        <div>
+          <label>Cliente</label>
+          <div class="row">
+            <input id="orcCliente" type="text" placeholder="Nome do cliente" />
+            <button class="btn btn-ghost small" onclick="goView('clientes')">Buscar</button>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:8px">
+          <div class="col">
+            <label>Telefone</label>
+            <input id="orcTel" type="tel" placeholder="(xx) xxxxx-xxxx" />
+          </div>
+          <div class="small">
+            <label>Ano</label>
+            <input id="veiculoAno" type="number" placeholder="2020" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:8px">
+          <div class="col">
+            <label>Marca</label>
+            <select id="veiculoMarca" onchange="onMarcaChange()">
+              <option value="">Selecione</option>
+              <option>Volkswagen</option><option>Ford</option><option>Chevrolet</option><option>Toyota</option>
+              <option>Honda</option><option>Hyundai</option><option>Fiat</option><option>Renault</option>
+            </select>
+          </div>
+          <div class="col" style="min-width:120px">
+            <label>Modelo</label>
+            <input id="veiculoModelo" type="text" placeholder="Modelo" />
+          </div>
+        </div>
+
+        <!-- items -->
+        <label style="margin-top:12px">Itens (Peças / Serviços)</label>
+        <div id="items" class="items-list"></div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn btn-primary" onclick="addItem()">+ Item</button>
+          <button class="btn btn-ghost" onclick="clearItems()">Limpar</button>
+        </div>
+
+        <!-- mão de obra separate -->
+        <div style="margin-top:12px">
+          <label>Mão de Obra (R$)</label>
+          <input id="maoObra" type="number" min="0" step="0.01" value="0" onchange="updateTotal()" />
+        </div>
+
+        <div class="total-row">
+          <div class="label muted">Observações</div>
+          <div class="value">R$ <span id="totalValue">0.00</span></div>
+        </div>
+
+        <textarea id="obs" placeholder="Observações, prazos e garantias..."></textarea>
+
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-primary" onclick="saveEstimate()">Salvar</button>
+          <button class="btn btn-ghost" onclick="printEstimate()">Gerar PDF</button>
+          <button class="btn btn-ghost" onclick="sendWhats()">Enviar WhatsApp</button>
+        </div>
+      </section>
+
+      <!-- CLIENTES VIEW -->
+      <section id="view-clientes" class="card" style="display:none">
+        <h3>Clientes</h3>
+        <div style="display:flex;gap:8px">
+          <input id="clientName" type="text" placeholder="Nome do cliente" />
+          <input id="clientTel" type="tel" class="small" placeholder="Telefone" />
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn btn-primary" onclick="addClient()">Salvar</button>
+          <button class="btn btn-ghost" onclick="renderClients()">Atualizar</button>
+        </div>
+        <div id="clientsList" class="clients-list" style="margin-top:12px"></div>
+      </section>
+
+      <!-- RELATÓRIOS VIEW (placeholder) -->
+      <section id="view-relatorios" class="card" style="display:none">
+        <h3>Relatórios</h3>
+        <p class="muted">Relatórios financeiros por período serão implementados na próxima etapa. Aqui será exibido resumo e gráficos.</p>
+        <div id="reportArea"></div>
+      </section>
+
+      <!-- CONFIG -->
+      <section id="view-config" class="card" style="display:none">
+        <h3>Configurações</h3>
+        <div>
+          <label>Nome da Oficina</label>
+          <input id="cfgName" type="text" placeholder="Ex: Auto Mecânica do João" oninput="applyOfficeName()" />
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+          <div class="col">
+            <label>WhatsApp (nº da oficina)</label>
+            <input id="cfgTel" type="tel" placeholder="55DDXXXXXXXXX" />
+          </div>
+          <div class="col">
+            <label>Endereço</label>
+            <input id="cfgAddr" type="text" placeholder="Rua, nº, bairro, cidade" />
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
+          <div style="flex:1">
+            <label>Tema</label>
+            <div style="display:flex;gap:8px;margin-top:6px">
+              <button class="btn btn-ghost" onclick="setTheme('light')">Claro</button>
+              <button class="btn btn-ghost" onclick="setTheme('dark')">Escuro</button>
+            </div>
+          </div>
+          <div style="width:170px">
+            <label>Tamanho da fonte: <span id="fontLabel">16px</span></label>
+            <input id="fontRange" type="range" min="13" max="22" value="16" oninput="onFontChange(this.value)" />
+          </div>
+        </div>
+
+        <div style="margin-top:10px">
+          <label>Logo (URL pública)</label>
+          <input id="cfgLogo" type="text" placeholder="https://..." />
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn btn-primary" onclick="saveConfig()">Salvar</button>
+          <button class="btn btn-ghost" onclick="resetConfig()">Restaurar padrão</button>
+        </div>
+      </section>
+
+      <footer class="note">Versão mobile-first • Arquivo único • Integração futura: Firebase, geração automática de PDF e upload.</footer>
+
+    </div> <!-- content -->
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav" role="navigation" aria-label="Navegação principal">
+      <div class="nav-btn active" data-view="orcamento" onclick="onNavClick(event)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 7 h18 v2 H3z" fill="currentColor"/><path d="M3 11h18v9H3z" fill="currentColor"/></svg>
+        <div style="font-size:0.85rem">Orçamentos</div>
+      </div>
+      <div class="nav-btn" data-view="clientes" onclick="onNavClick(event)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="3" fill="currentColor"/><path d="M4 20c0-3.3 4.3-5 8-5s8 1.7 8 5H4z" fill="currentColor"/></svg>
+        <div style="font-size:0.85rem">Clientes</div>
+      </div>
+      <div class="nav-btn" data-view="relatorios" onclick="onNavClick(event)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="6" width="4" height="12" rx="1" fill="currentColor"/><rect x="10" y="3" width="4" height="15" rx="1" fill="currentColor"/><rect x="17" y="10" width="4" height="8" rx="1" fill="currentColor"/></svg>
+        <div style="font-size:0.85rem">Relatórios</div>
+      </div>
+      <div class="nav-btn" data-view="config" onclick="onNavClick(event)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a4 4 0 100 8 4 4 0 000-8z" fill="currentColor"/><path d="M19.4 15a1.9 1.9 0 00.1-1l1.9-1.4-2-3.5-2.2.5c-.4-.3-.9-.6-1.4-.8L15 3h-6l-.6 3.8c-.5.2-1 .5-1.4.8L4.8 7.7 2.8 11.2l1.9 1.4c0 .3.1.6.1 1s0 .7-.1 1L2.8 16.4 4.8 20l2.2-.5c.4.3.9.6 1.4.8L9 21h6l.6-3.8c.5-.2 1-.5 1.4-.8l2.2.5 2-3.6-1.9-1.4z" fill="currentColor"/></svg>
+        <div style="font-size:0.85rem">Config</div>
+      </div>
+    </nav>
+
+  </div> <!-- device -->
+
+  <script>
+    // Local Storage keys
+    const LS = { CFG:'cfg_v2', CLIENTS:'clients_v2', ESTIMATES:'est_v2', THEME:'theme_v2', FONT:'font_v2' };
+
+    // Init
+    document.addEventListener('DOMContentLoaded', ()=>{
+      loadConfig();
+      loadClients();
+      // ensure one empty item
+      if (!document.querySelectorAll('.item').length) addItem();
+      updateTotal();
+    });
+
+    // Navigation
+    function onNavClick(e){
+      const btn = e.currentTarget; const view = btn.getAttribute('data-view');
+      document.querySelectorAll('.nav-btn').forEach(n=>n.classList.toggle('active', n===btn));
+      goView(view);
+    }
+    function goView(view){
+      document.querySelectorAll('[id^="view-"]').forEach(s=>s.style.display='none');
+      const map = { orcamento:'view-orcamento', clientes:'view-clientes', relatorios:'view-relatorios', config:'view-config' };
+      const el = document.getElementById(map[view]||'view-orcamento'); if (el) el.style.display='block';
+      // scroll top for mobile comfort
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+
+    // Login placeholder
+    function fakeLogin(){ document.getElementById('loginOverlay').style.display='none'; }
+    function openRegister(){ alert('Registro: integração com Firebase Auth será adicionada.'); }
+
+    // Config
+    function saveConfig(){
+      const cfg = { name:document.getElementById('cfgName').value.trim(), tel:document.getElementById('cfgTel').value.trim(), addr:document.getElementById('cfgAddr').value.trim(), logo:document.getElementById('cfgLogo').value.trim() };
+      localStorage.setItem(LS.CFG, JSON.stringify(cfg)); applyHeader(cfg);
+      alert('Configurações salvas.');
+    }
+    function loadConfig(){
+      const raw = localStorage.getItem(LS.CFG); if (raw){ try{ const cfg=JSON.parse(raw); document.getElementById('cfgName').value=cfg.name||''; document.getElementById('cfgTel').value=cfg.tel||''; document.getElementById('cfgAddr').value=cfg.addr||''; document.getElementById('cfgLogo').value=cfg.logo||''; applyHeader(cfg);}catch(e){console.warn(e);} }
+      // theme & font
+      const t = localStorage.getItem(LS.THEME) || 'light'; setTheme(t);
+      const f = parseInt(localStorage.getItem(LS.FONT) || '16',10); onFontChange(f);
+    }
+    function applyHeader(cfg){ const name = cfg.name && cfg.name.length?cfg.name:'Oficina Smart Orçamentos'; document.getElementById('headerOfficeName').textContent = name; }
+    function resetConfig(){ if (!confirm('Restaurar configurações para padrão?')) return; localStorage.removeItem(LS.CFG); loadConfig(); alert('Padrões restaurados'); }
+
+    // Theme
+    function setTheme(mode){ if (mode==='dark') document.documentElement.setAttribute('data-theme','dark'); else document.documentElement.removeAttribute('data-theme'); localStorage.setItem(LS.THEME, mode); }
+
+    // Font
+    function onFontChange(val){ const px = parseInt(val,10); document.documentElement.style.setProperty('--font-base', px+'px'); document.getElementById('fontLabel').textContent = px+'px'; document.getElementById('fontRange').value = px; localStorage.setItem(LS.FONT, px); }
+
+    // Clients
+    function loadClients(){ renderClients(); }
+    function getClients(){ try{ return JSON.parse(localStorage.getItem(LS.CLIENTS)||'[]'); }catch(e){return[];} }
+    function setClients(list){ localStorage.setItem(LS.CLIENTS, JSON.stringify(list)); }
+    function addClient(){ const name=document.getElementById('clientName').value.trim(); const tel=document.getElementById('clientTel').value.trim(); if(!name){alert('Nome obrigatório');return;} const clients=getClients(); clients.unshift({id:Date.now(),name,tel,created:new Date().toISOString()}); setClients(clients); document.getElementById('clientName').value=''; document.getElementById('clientTel').value=''; renderClients(); }
+    function renderClients(){ const cont=document.getElementById('clientsList'); cont.innerHTML=''; const clients=getClients(); if(!clients.length){ cont.innerHTML='<div class="muted">Nenhum cliente cadastrado.</div>'; return; } clients.forEach(c=>{ const div=document.createElement('div'); div.className='client-card'; div.innerHTML=`<div><div style="font-weight:800">${escape(c.name)}</div><div class="muted" style="font-size:0.86rem">${escape(c.tel||'--')}</div></div><div style='display:flex;gap:8px;align-items:center'><button class="btn btn-ghost" onclick='useClient(${c.id})'>Usar</button><button class="btn btn-ghost" onclick='editClient(${c.id})'>Editar</button><button class="btn btn-danger" onclick='deleteClient(${c.id})'>Excluir</button></div>`; cont.appendChild(div); }); }
+    function useClient(id){ const clients=getClients(); const c=clients.find(x=>x.id===id); if(!c) return alert('Cliente não encontrado'); document.getElementById('orcCliente').value=c.name; document.getElementById('orcTel').value=c.tel||''; goView('orcamento'); }
+    function editClient(id){ const clients=getClients(); const c=clients.find(x=>x.id===id); if(!c) return; const n=prompt('Nome',c.name); if(n===null) return; const t=prompt('Telefone',c.tel||''); c.name=n.trim(); c.tel=t.trim(); setClients(clients); renderClients(); }
+    function deleteClient(id){ if(!confirm('Excluir cliente?')) return; let clients=getClients(); clients=clients.filter(x=>x.id!==id); setClients(clients); renderClients(); }
+
+    // Items
+    function addItem(desc='',q=1,v=0){ const wrap=document.getElementById('items'); const div=document.createElement('div'); div.className='item'; div.innerHTML=`<input type='text' placeholder='Descrição' value='${escape(desc)}' oninput='updateTotal()' /><input type='number' min='1' value='${q}' oninput='updateTotal()' /><input type='number' min='0' step='0.01' value='${v}' oninput='updateTotal()' /><div class='subtotal'>0.00</div>`; wrap.appendChild(div); updateTotal(); }
+    function clearItems(){ if(!confirm('Remover todos os itens?')) return; document.getElementById('items').innerHTML=''; addItem(); updateTotal(); }
+    function updateTotal(){ let sum=0; document.querySelectorAll('.item').forEach(it=>{ const desc=it.children[0].value; const q=parseFloat(it.children[1].value)||0; const v=parseFloat(it.children[2].value)||0; const sub=q*v; it.querySelector('.subtotal').textContent=sub.toFixed(2); sum+=sub; }); const mao=parseFloat(document.getElementById('maoObra').value)||0; const total=sum+mao; document.getElementById('totalValue').textContent=total.toFixed(2); return total; }
+
+    // Save estimate
+    function saveEstimate(){ const cliente=document.getElementById('orcCliente').value.trim(); if(!cliente) return alert('Informe o cliente'); const items=[]; document.querySelectorAll('.item').forEach(it=>{ const d=it.children[0].value.trim(); if(!d) return; const q=parseFloat(it.children[1].value)||0; const v=parseFloat(it.children[2].value)||0; items.push({desc:d,q,v}); }); const est={ id:Date.now(), cliente, tel:document.getElementById('orcTel').value.trim(), veiculo:{marca:document.getElementById('veiculoMarca').value, modelo:document.getElementById('veiculoModelo').value, ano:document.getElementById('veiculoAno').value}, items, mao:parseFloat(document.getElementById('maoObra').value)||0, total:updateTotal(), obs:document.getElementById('obs').value.trim(), created:new Date().toISOString(), status:'orcamento' }; const all=JSON.parse(localStorage.getItem(LS.ESTIMATES)||'[]'); all.unshift(est); localStorage.setItem(LS.ESTIMATES, JSON.stringify(all)); alert('Orçamento salvo.'); }
+
+    // Print / PDF (placeholder)
+    function printEstimate(){ window.print(); }
+
+    // WhatsApp send (message + PDF hint)
+    function sendWhats(){ const cfg=JSON.parse(localStorage.getItem(LS.CFG)||'{}'); const office=cfg.name||'Oficina'; const client=document.getElementById('orcCliente').value||''; const tel=document.getElementById('orcTel').value||''; let itemsText=''; document.querySelectorAll('.item').forEach((it,i)=>{ const d=it.children[0].value||''; const q=it.children[1].value||1; const v=parseFloat(it.children[2].value||0).toFixed(2); itemsText+=`${i+1}. ${d} — ${q} x R$ ${v}\n`; }); const mao=parseFloat(document.getElementById('maoObra').value||0).toFixed(2); const total=document.getElementById('totalValue').textContent||'0.00'; let msg=`${office}\nOrçamento para: ${client}\n\nItens:\n${itemsText}\nMão de obra: R$ ${mao}\nTotal: R$ ${total}\n\nObservações: ${document.getElementById('obs').value || ''}\n\n(Envio via app)`; const phone=tel.replace(/[^0-9]/g,''); const url=`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`; window.open(url,'_blank'); alert('WhatsApp aberto. Para anexar o PDF, gere o PDF e anexe manualmente. Em próximas etapas implementaremos upload automático.'); }
+
+    // Simple helpers
+    function escape(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
+
+    // Brand -> model suggestions (simple UX hint)
+    const modelsByBrand={ 'Honda':['Civic','Fit','HR-V'], 'Toyota':['Corolla','Hilux','Yaris'], 'Volkswagen':['Gol','Polo','Golf'], 'Ford':['Ka','Ranger','EcoSport'] };
+    function onMarcaChange(){ const b=document.getElementById('veiculoMarca').value; const list=modelsByBrand[b]||[]; document.getElementById('veiculoModelo').placeholder = list.length? 'Ex: '+list.slice(0,3).join(', '):'Modelo'; }
+
+    // Load saved clients / config into UI on start
+    function loadClientsToUI(){ renderClients(); }
+
+    // expose goView for buttons
+    window.goView = goView;
+
+  </script>
+</body>
+</html>
